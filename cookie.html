@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookie Clicker Pro</title>
+    <style>
+        :root { --primary: #ff9f43; --secondary: #ee5253; --bg: #2f3542; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Panneau Gauche : Le Cookie */
+        .game-section { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 4px solid #1e272e; position: relative; }
+        #cookie { width: 250px; cursor: pointer; transition: transform 0.1s; user-select: none; filter: drop-shadow(0 0 20px rgba(0,0,0,0.5)); }
+        #cookie:active { transform: scale(0.95); }
+        .stats { text-align: center; margin-bottom: 20px; }
+        .stats h1 { font-size: 3rem; margin: 0; color: var(--primary); }
+        
+        /* Animation +1 */
+        .particle { position: absolute; color: var(--primary); font-weight: bold; pointer-events: none; animation: floatUp 1s ease-out forwards; }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-100px); } }
+
+        /* Panneau Droit : Boutique */
+        .shop-section { width: 350px; background: #1e272e; padding: 20px; overflow-y: auto; }
+        .shop-section h2 { border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
+        .upgrade { background: #57606f; margin: 10px 0; padding: 15px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; transition: 0.2s; }
+        .upgrade:hover { background: #808e9b; }
+        .upgrade.disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
+        .upgrade-info b { display: block; font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+
+    <div class="game-section">
+        <div class="stats">
+            <h1 id="cookie-count">0</h1>
+            <p>Cookies par seconde : <span id="cps-display">0</span></p>
+        </div>
+        <img id="cookie" src="https://cdn-icons-png.flaticon.com" alt="Cookie">
+    </div>
+
+    <div class="shop-section">
+        <h2>Boutique</h2>
+        <div id="shop-container"></div>
+    </div>
+
+    <script>
+        let cookies = 0;
+        let cps = 0;
+
+        const upgrades = [
+            { id: 'cursor', name: 'Curseur', cost: 15, income: 0.1, count: 0 },
+            { id: 'grandma', name: 'Grand-mère', cost: 100, income: 1, count: 0 },
+            { id: 'farm', name: 'Ferme', cost: 1100, income: 8, count: 0 },
+            { id: 'mine', name: 'Mine', cost: 12000, income: 47, count: 0 }
+        ];
+
+        const cookieBtn = document.getElementById('cookie');
+        const countDisplay = document.getElementById('cookie-count');
+        const cpsDisplay = document.getElementById('cps-display');
+        const shopContainer = document.getElementById('shop-container');
+
+        // Initialisation de la boutique
+        function renderShop() {
+            shopContainer.innerHTML = '';
+            upgrades.forEach((up, index) => {
+                const div = document.createElement('div');
+                div.className = `upgrade ${cookies < up.cost ? 'disabled' : ''}`;
+                div.innerHTML = `
+                    <div class="upgrade-info">
+                        <b>${up.name} (${up.count})</b>
+                        <span>Coût: ${Math.floor(up.cost)} 🍪</span>
+                    </div>
+                    <div>+${up.income}/s</div>
+                `;
+                div.onclick = () => buyUpgrade(index);
+                shopContainer.appendChild(div);
+            });
+        }
+
+        // Clic sur le cookie
+        cookieBtn.onclick = (e) => {
+            cookies++;
+            createParticle(e.clientX, e.clientY);
+            updateUI();
+        };
+
+        function buyUpgrade(index) {
+            const up = upgrades[index];
+            if (cookies >= up.cost) {
+                cookies -= up.cost;
+                up.count++;
+                up.cost *= 1.15; // Le prix augmente de 15%
+                calculateCPS();
+                renderShop();
+                updateUI();
+            }
+        }
+
+        function calculateCPS() {
+            cps = upgrades.reduce((acc, up) => acc + (up.count * up.income), 0);
+            cpsDisplay.innerText = cps.toFixed(1);
+        }
+
+        function updateUI() {
+            countDisplay.innerText = Math.floor(cookies);
+            // On rafraîchit la boutique pour activer/désactiver les boutons
+            const upgradeButtons = document.querySelectorAll('.upgrade');
+            upgrades.forEach((up, i) => {
+                if (cookies >= up.cost) upgradeButtons[i]?.classList.remove('disabled');
+                else upgradeButtons[i]?.classList.add('disabled');
+            });
+        }
+
+        // Animation de texte flottant
+        function createParticle(x, y) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.left = x + 'px';
+            p.style.top = y + 'px';
+            p.innerText = '+1';
+            document.body.appendChild(p);
+            setTimeout(() => p.remove(), 1000);
+        }
+
+        // Boucle de production automatique (toutes les 100ms)
+        setInterval(() => {
+            cookies += cps / 10;
+            updateUI();
+        }, 100);
+
+        renderShop();
+    </script>
+</body>
+</html>
