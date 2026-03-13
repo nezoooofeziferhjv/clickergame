@@ -2,174 +2,138 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cookie Clicker - Save Edition</title>
+    <title>Cookie Clicker Ultra</title>
     <style>
-        :root { --primary: #f39c12; --secondary: #d35400; --bg: #2c3e50; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; display: flex; height: 100vh; overflow: hidden; }
+        body { margin: 0; font-family: 'Arial', sans-serif; background: #2c3e50; color: white; display: flex; height: 100vh; }
         
-        .game-section { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 4px solid #1a252f; position: relative; }
-        #cookie { width: 220px; cursor: pointer; transition: transform 0.05s; user-select: none; filter: drop-shadow(0 0 15px rgba(0,0,0,0.4)); }
-        #cookie:active { transform: scale(0.92); }
-        
-        .stats { text-align: center; margin-bottom: 30px; }
-        .stats h1 { font-size: 3.5rem; margin: 0; color: var(--primary); text-shadow: 2px 2px #000; }
-        
-        .particle { position: absolute; color: #f1c40f; font-weight: bold; font-size: 1.5rem; pointer-events: none; animation: floatUp 0.8s ease-out forwards; z-index: 10; }
-        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-120px) rotate(10deg); } }
+        /* Côté GAUCHE : Le Cookie */
+        .game { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(#34495e, #2c3e50); }
+        #cookie { 
+            width: 200px; height: 200px; background: #d2691e; border-radius: 50%; 
+            border: 8px solid #8b4513; cursor: pointer; position: relative;
+            box-shadow: 0 10px 0 #8b4513, 0 20px 30px rgba(0,0,0,0.5);
+            transition: transform 0.05s; user-select: none;
+        }
+        #cookie:active { transform: translateY(5px); box-shadow: 0 5px 0 #8b4513, 0 10px 20px rgba(0,0,0,0.5); }
+        /* Pépites de chocolat */
+        .dot { position: absolute; background: #3d1f05; border-radius: 50%; width: 20px; height: 20px; }
 
-        .shop-section { width: 380px; background: #1a252f; padding: 20px; overflow-y: auto; box-shadow: -5px 0 15px rgba(0,0,0,0.3); }
-        .shop-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); margin-bottom: 15px; }
-        
-        .upgrade { background: #34495e; margin: 10px 0; padding: 15px; border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; transition: 0.2s; border: 1px solid transparent; }
-        .upgrade:hover:not(.disabled) { background: #4b6584; border-color: var(--primary); }
-        .upgrade.disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(1); }
-        .upgrade-info b { display: block; font-size: 1.1rem; color: #ecf0f1; }
-        .upgrade-count { font-size: 1.5rem; font-weight: bold; color: var(--primary); margin-left: 10px; }
+        .score-board { text-align: center; margin-bottom: 20px; }
+        .score-board h1 { font-size: 3rem; margin: 0; color: #f1c40f; }
 
-        .btn-reset { background: #c0392b; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8rem; }
+        /* Côté DROIT : Boutique */
+        .shop { width: 300px; background: #1a252f; padding: 20px; border-left: 5px solid #f1c40f; overflow-y: auto; }
+        .item { 
+            background: #34495e; padding: 15px; margin-bottom: 10px; border-radius: 8px; 
+            cursor: pointer; display: flex; justify-content: space-between; border: 2px solid transparent;
+        }
+        .item:hover { border-color: #f1c40f; }
+        .item.disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .particle { position: absolute; color: #f1c40f; font-weight: bold; pointer-events: none; animation: fly 0.8s linear forwards; }
+        @keyframes fly { to { transform: translateY(-100px); opacity: 0; } }
     </style>
 </head>
 <body>
 
-    <div class="game-section">
-        <div class="stats">
-            <h1 id="cookie-count">0</h1>
-            <p>Cookies par seconde : <span id="cps-display">0</span></p>
+    <div class="game">
+        <div class="score-board">
+            <h1 id="total">0</h1>
+            <p>CPS: <span id="cps">0</span></p>
         </div>
-        <img id="cookie" src="https://cdn-icons-png.flaticon.com" alt="Cookie">
+        <div id="cookie">
+            <!-- Pépites en CSS -->
+            <div class="dot" style="top:20%; left:30%"></div>
+            <div class="dot" style="top:50%; left:20%"></div>
+            <div class="dot" style="top:70%; left:50%"></div>
+            <div class="dot" style="top:30%; left:60%"></div>
+            <div class="dot" style="top:60%; left:75%"></div>
+        </div>
     </div>
 
-    <div class="shop-section">
-        <div class="shop-header">
-            <h2>Boutique</h2>
-            <button class="btn-reset" onclick="resetGame()">Réinitialiser</button>
-        </div>
-        <div id="shop-container"></div>
+    <div class="shop">
+        <h3>Boutique</h3>
+        <div id="items-list"></div>
+        <button onclick="reset()" style="margin-top:20px; background:red; color:white; border:none; padding:10px; cursor:pointer; width:100%">RESET</button>
     </div>
 
-    <script>
-        let cookies = 0;
-        let cps = 0;
+<script>
+    let score = 0;
+    let autoClickers = 0;
+    let shopItems = [
+        { id: 1, name: "Clic Auto", cost: 15, power: 1, count: 0 },
+        { id: 2, name: "Super Clic", cost: 100, power: 5, count: 0 },
+        { id: 3, name: "Usine", cost: 500, power: 20, count: 0 }
+    ];
 
-        const defaultUpgrades = [
-            { id: 'cursor', name: 'Curseur', cost: 15, income: 0.1, count: 0 },
-            { id: 'grandma', name: 'Grand-mère', cost: 100, income: 1, count: 0 },
-            { id: 'farm', name: 'Ferme', cost: 1100, income: 8, count: 0 },
-            { id: 'mine', name: 'Mine', cost: 12000, income: 47, count: 0 },
-            { id: 'factory', name: 'Usine', cost: 130000, income: 260, count: 0 }
-        ];
+    const totalEl = document.getElementById('total');
+    const cpsEl = document.getElementById('cps');
+    const cookieBtn = document.getElementById('cookie');
+    const itemsList = document.getElementById('items-list');
 
-        let upgrades = JSON.parse(JSON.stringify(defaultUpgrades));
+    // Chargement de la sauvegarde
+    const saved = JSON.parse(localStorage.getItem('cookieSave'));
+    if (saved) {
+        score = saved.score;
+        shopItems = saved.shopItems;
+    }
 
-        const cookieBtn = document.getElementById('cookie');
-        const countDisplay = document.getElementById('cookie-count');
-        const cpsDisplay = document.getElementById('cps-display');
-        const shopContainer = document.getElementById('shop-container');
+    function update() {
+        totalEl.innerText = Math.floor(score);
+        let totalCPS = shopItems.reduce((acc, item) => acc + (item.count * item.power), 0);
+        cpsEl.innerText = totalCPS.toFixed(1);
+        
+        // Affichage Boutique
+        itemsList.innerHTML = '';
+        shopItems.forEach((item, index) => {
+            let div = document.createElement('div');
+            div.className = `item ${score < item.cost ? 'disabled' : ''}`;
+            div.innerHTML = `<div><b>${item.name}</b><br>Coût: ${Math.floor(item.cost)}</div> <div>x${item.count}</div>`;
+            div.onclick = () => buy(index);
+            itemsList.appendChild(div);
+        });
+        
+        // Sauvegarde
+        localStorage.setItem('cookieSave', JSON.stringify({score, shopItems}));
+    }
 
-        // --- SYSTÈME DE SAUVEGARDE ---
-        function saveGame() {
-            const gameState = { cookies, upgrades };
-            localStorage.setItem('cookieClickerSave', JSON.stringify(gameState));
+    function buy(index) {
+        if (score >= shopItems[index].cost) {
+            score -= shopItems[index].cost;
+            shopItems[index].count++;
+            shopItems[index].cost *= 1.2;
+            update();
         }
+    }
 
-        function loadGame() {
-            const savedData = localStorage.getItem('cookieClickerSave');
-            if (savedData) {
-                const data = JSON.parse(savedData);
-                cookies = data.cookies;
-                // On fusionne pour éviter les erreurs si on ajoute de nouveaux types d'upgrades plus tard
-                upgrades = data.upgrades;
-                calculateCPS();
-            }
-            renderShop();
-            updateUI();
+    cookieBtn.onclick = (e) => {
+        score++;
+        // Petite animation +1
+        let p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = e.pageX + 'px';
+        p.style.top = e.pageY + 'px';
+        p.innerText = "+1";
+        document.body.appendChild(p);
+        setTimeout(() => p.remove(), 800);
+        update();
+    };
+
+    function reset() {
+        if(confirm("Effacer tout ?")) {
+            localStorage.clear();
+            location.reload();
         }
+    }
 
-        function resetGame() {
-            if(confirm("Voulez-vous vraiment tout recommencer ?")) {
-                localStorage.removeItem('cookieClickerSave');
-                location.reload();
-            }
-        }
+    // Boucle de gain auto (chaque seconde)
+    setInterval(() => {
+        let gain = shopItems.reduce((acc, item) => acc + (item.count * item.power), 0);
+        score += gain / 10; // On divise par 10 car l'intervalle est de 100ms
+        update();
+    }, 100);
 
-        // --- LOGIQUE DU JEU ---
-        function renderShop() {
-            shopContainer.innerHTML = '';
-            upgrades.forEach((up, index) => {
-                const div = document.createElement('div');
-                div.className = `upgrade ${cookies < up.cost ? 'disabled' : ''}`;
-                div.innerHTML = `
-                    <div class="upgrade-info">
-                        <b>${up.name}</b>
-                        <span>Coût: ${Math.floor(up.cost)} 🍪</span>
-                    </div>
-                    <div style="display:flex; align-items:center;">
-                        <small>+${up.income}/s</small>
-                        <span class="upgrade-count">${up.count}</span>
-                    </div>
-                `;
-                div.onclick = () => buyUpgrade(index);
-                shopContainer.appendChild(div);
-            });
-        }
-
-        cookieBtn.onclick = (e) => {
-            cookies++;
-            createParticle(e.clientX, e.clientY);
-            updateUI();
-        };
-
-        function buyUpgrade(index) {
-            const up = upgrades[index];
-            if (cookies >= up.cost) {
-                cookies -= up.cost;
-                up.count++;
-                up.cost *= 1.15;
-                calculateCPS();
-                renderShop();
-                updateUI();
-                saveGame();
-            }
-        }
-
-        function calculateCPS() {
-            cps = upgrades.reduce((acc, up) => acc + (up.count * up.income), 0);
-            cpsDisplay.innerText = cps.toFixed(1);
-        }
-
-        function updateUI() {
-            countDisplay.innerText = Math.floor(cookies);
-            const upgradeButtons = document.querySelectorAll('.upgrade');
-            upgrades.forEach((up, i) => {
-                if (cookies >= up.cost) upgradeButtons[i]?.classList.remove('disabled');
-                else upgradeButtons[i]?.classList.add('disabled');
-            });
-        }
-
-        function createParticle(x, y) {
-            const p = document.createElement('div');
-            p.className = 'particle';
-            p.style.left = (x - 10) + 'px';
-            p.style.top = (y - 20) + 'px';
-            p.innerText = '+1';
-            document.body.appendChild(p);
-            setTimeout(() => p.remove(), 800);
-        }
-
-        // Boucle de production (10fps pour la fluidité)
-        setInterval(() => {
-            if (cps > 0) {
-                cookies += cps / 10;
-                updateUI();
-            }
-        }, 100);
-
-        // Sauvegarde automatique toutes les 5 secondes
-        setInterval(saveGame, 5000);
-
-        // Lancement
-        loadGame();
-    </script>
+    update();
+</script>
 </body>
 </html>
