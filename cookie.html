@@ -1,22 +1,75 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Cookie Clicker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Super Cookie Clicker</title>
     <style>
-        body { text-align: center; font-family: sans-serif; background: #333; color: white; }
-        #cookie { font-size: 100px; cursor: pointer; user-select: none; }
+        body { background: #222; color: white; font-family: sans-serif; text-align: center; padding-top: 50px; }
+        #cookie { font-size: 120px; cursor: pointer; user-select: none; display: inline-block; transition: transform 0.1s; }
+        #cookie:active { transform: scale(0.9); }
+        .stat { font-size: 2rem; margin: 10px; color: #f1c40f; }
+        .shop { margin-top: 30px; background: #333; padding: 20px; display: inline-block; border-radius: 10px; }
+        button { padding: 10px; cursor: pointer; font-weight: bold; background: #e67e22; border: none; color: white; border-radius: 5px; }
+        button:disabled { background: #555; cursor: not-allowed; }
     </style>
 </head>
 <body>
-    <h1>Cookies: <span id="count">0</span></h1>
+
+    <h1>Cookie Clicker de Nezooo</h1>
+    <div class="stat">Cookies : <span id="count">0</span></div>
+    <div class="stat" style="font-size: 1.2rem;">Par seconde : <span id="cps">0</span></div>
+    
     <div id="cookie">🍪</div>
-<script>
-    let cookies = 0;
-    document.getElementById('cookie').onclick = () => {
-        cookies++;
-        document.getElementById('count').innerText = cookies;
-    };
-</script>
+
+    <br>
+    <div class="shop">
+        <h3>Boutique</h3>
+        <p>Curseur (+1/s) | Coût : <span id="cost">15</span></p>
+        <button id="buy-btn">Acheter un Curseur</button>
+    </div>
+
+    <script>
+        let cookies = parseFloat(localStorage.getItem('cookies')) || 0;
+        let cursors = parseInt(localStorage.getItem('cursors')) || 0;
+        let cost = Math.floor(15 * Math.pow(1.15, cursors));
+
+        const countEl = document.getElementById('count');
+        const cpsEl = document.getElementById('cps');
+        const costEl = document.getElementById('cost');
+        const buyBtn = document.getElementById('buy-btn');
+
+        function updateUI() {
+            countEl.innerText = Math.floor(cookies);
+            cpsEl.innerText = cursors;
+            costEl.innerText = cost;
+            buyBtn.disabled = cookies < cost;
+            // Sauvegarde locale
+            localStorage.setItem('cookies', cookies);
+            localStorage.setItem('cursors', cursors);
+        }
+
+        document.getElementById('cookie').onclick = () => {
+            cookies++;
+            updateUI();
+        };
+
+        buyBtn.onclick = () => {
+            if (cookies >= cost) {
+                cookies -= cost;
+                cursors++;
+                cost = Math.floor(15 * Math.pow(1.15, cursors));
+                updateUI();
+            }
+        };
+
+        // Gain automatique
+        setInterval(() => {
+            cookies += cursors / 10;
+            updateUI();
+        }, 100);
+
+        updateUI();
+    </script>
 </body>
 </html>
